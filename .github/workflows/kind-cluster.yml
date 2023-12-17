@@ -1,0 +1,58 @@
+name: Create a kind cluster
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: Create a kind cluster
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Set up kind cluster
+        run: |
+          chmod +x ./create_cluster.sh
+          ./create_cluster.sh
+
+      - name: Verify kind cluster
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+
+      - name: install helmfile
+        run: |
+          curl -LO https://github.com/helmfile/helmfile/releases/download/v0.159.0/helmfile_0.159.0_linux_amd64.tar.gz
+          tar -xzvf helmfile_0.159.0_linux_amd64.tar.gz
+          sudo mv helmfile /usr/local/bin
+          chmod +x /usr/local/bin/helmfile
+          helmfile --version
+
+      - name: apply helmfile
+        run: |
+          command_retry=0
+          until [ $command_retry -ge 2 ]
+          do
+            helmfile --file ./helm sync && break
+            command_retry=$((command_retry+1))
+            if [ $command_retry -eq 2 ]; then
+                echo "Command failed after 2 attempts"
+                exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Check localhost response
+        run: |
+          response=$(curl --write-out "%{http_code}" --silent --output /dev/null http://localhost)
+          if [ "$response" -ne 404 ]; then
+            echo "Error: expected a 404 response, got $response"
+            exit 1
+          fi
