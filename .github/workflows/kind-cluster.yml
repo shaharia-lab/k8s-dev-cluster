@@ -1,5 +1,3 @@
-# .github/workflows/kind-cluster.yml
-
 name: Create a kind cluster
 
 on:
