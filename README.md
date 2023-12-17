@@ -1,11 +1,16 @@
-# Local Kubernetes Cluster
+# k8s-dev-cluster
 
-This directory contains all the necessary bash script and helm charts to create a local kubernetes
-cluster by using `Kind`
+Deploy a local kubernetes cluster for development purpose. This repository contains all the necessary tools to create a local kubernetes cluster using `Kind` and `Helmfile`
 
-## Installation
+## Prerequisites
 
-### Create Kind Cluster
+- [Docker](https://docs.docker.com/get-docker/)
+- [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
+- [Helmfile](https://github.com/roboll/helmfile)
+
+## Usage
+
+### Create Cluster
 
 ```bash
 chmod +x ./create_cluster.sh
@@ -32,9 +37,26 @@ clusters:
 ### Install Necessary Tools using Helmfile
 
 ```bash
-### Install Helm charts
-
-```bash
 helmfile --file ./helm deps
 helmfile --file ./helm sync
 ```
+
+After that, you can access the cluster using `kubectl`:
+
+```bash
+➜ kubectl get nodes                                                                            
+NAME                      STATUS   ROLES           AGE   VERSION
+local-k8s-control-plane   Ready    control-plane   27m   v1.25.3
+```
+
+## Contributing
+
+If you want to contribute to this repository, please create an issue first, then create a pull request with your changes. If the changes can help other developers, we can proceed with the pull request.
+
+## Create Issue
+
+If you have any questions or issues, please create an issue [here](https://github.com/shaharia-lab/k8s-dev-cluster/issues)
+
+## Disclaimer
+
+This repository is only for development purpose. Do not use it in production.
