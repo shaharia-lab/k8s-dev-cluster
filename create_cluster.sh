@@ -3,7 +3,6 @@
 # Set the desired configuration
 KIND_VERSION="v0.20.0"
 CLUSTER_NAME="local-k8s"
-KUBERNETES_VERSION="v1.22.0"
 NODES=2
 
 # Function to delete an existing Kind cluster
@@ -74,12 +73,6 @@ nodes:
     protocol: TCP
     listenAddress: "0.0.0.0"
 EOF
-}
-
-# Function to set kubeconfig context
-set_kubeconfig_context() {
-    local cluster_name=$1
-    export KUBECONFIG="$(kind get kubeconfig-path --name="$cluster_name")"
 }
 
 # Function to verify cluster status
@@ -206,9 +199,6 @@ prepare_kind_cluster() {
 
     # Create the Kind cluster
     create_cluster "$cluster_name" "$nodes"
-
-    # Set kubeconfig context
-    ##set_kubeconfig_context "$cluster_name"
 
     # Verify cluster status
     verify_cluster_status
