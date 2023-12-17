@@ -1,3 +1,6 @@
+<img src="https://kind.sigs.k8s.io/logo/logo.png" width="160" height="100">
+<img src="https://helm.sh/img/helm.svg" width="100" height="100">
+
 # k8s-dev-cluster
 
 Deploy a local kubernetes cluster for development purpose. This repository contains all the necessary tools to create a local kubernetes cluster using `Kind` and `Helmfile`
