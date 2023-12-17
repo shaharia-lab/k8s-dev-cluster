@@ -1,0 +1,29 @@
+# .github/workflows/kind-cluster.yml
+
+name: Create a kind cluster
+
+on: [push, pull_request] # choose when you want to run the workflow
+
+jobs:
+  build:
+    name: Create a kind cluster
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.21
+
+      - name: Set up kind cluster
+        run: |
+          chmod +x ./create_cluster.sh
+          ./create_cluster.sh
+
+      - name: Verify kind cluster
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
