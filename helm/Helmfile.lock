@@ -1,0 +1,16 @@
+version: v0.144.0
+dependencies:
+- name: cloudflare-tunnel
+  repository: https://cloudflare.github.io/helm-charts
+  version: 0.3.0
+- name: ingress-nginx
+  repository: https://kubernetes.github.io/ingress-nginx
+  version: 4.7.1
+- name: kube-prometheus-stack
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 48.1.2
+- name: loki-stack
+  repository: https://grafana.github.io/helm-charts
+  version: 2.9.10
+digest: sha256:78768f4f4e9413b7738d26341511b00a07ece61a4ac624923625aba63717d002
+generated: "2023-12-13T19:12:56.454820474+01:00"

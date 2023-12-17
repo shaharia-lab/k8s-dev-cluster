@@ -1,0 +1,78 @@
+helmDefaults:
+  kubeContext: kind-local-k8s
+  wait: false
+  force: false
+  cleanupOnFail: true
+  historyMax: 2
+
+repositories:
+  - name: ingress-nginx
+    url: https://kubernetes.github.io/ingress-nginx
+  - name: prometheus-community
+    url: https://prometheus-community.github.io/helm-charts
+  - name: bitnami
+    url: https://charts.bitnami.com/bitnami
+  - name: grafana
+    url: https://grafana.github.io/helm-charts
+  - name: metrics-server
+    url: https://kubernetes-sigs.github.io/metrics-server
+  - name: grafana
+    url: https://grafana.github.io/helm-charts
+  - name: cloudflare
+    url: https://cloudflare.github.io/helm-charts
+
+releases:
+  - name: kube-prometheus-stack
+    chart: prometheus-community/kube-prometheus-stack
+    version: 48.1.2
+    namespace: monitoring
+    installed: {{ env "INSTALL_KUBE_PROMETHEUS_STACK" | default "true" }}
+    wait: true
+    labels:
+      run_diff: "true"
+      helm3: "true"
+    values:
+      - values/kube-prometheus.default.yaml
+      - values/kube-prometheus.custom.yaml
+    set:
+      - name: alertmanager.config.receivers[0].email_configs[0].auth_password
+        value: {{ env "ALERTMANAGER_GMAIL_SMTP_PASSWORD" }}
+
+  - name: nginx-ingress
+    namespace: nginx-ingress
+    chart: ingress-nginx/ingress-nginx
+    installed: {{ env "INSTALL_NGINX_INGRESS" | default "true" }}
+    values:
+      - values/nginx-ingress.default.yaml
+      - values/nginx-ingress.custom.yaml
+    version: 4.7.1
+    labels:
+      run_diff: "true"
+      helm3: "true"
+
+  - name: loki
+    chart: grafana/loki-stack
+    namespace: monitoring
+    installed: {{ env "INSTALL_LOKI" | default "false" }}
+    values:
+      - values/loki-stack.default.yaml
+      - values/loki-stack.custom.yaml
+    version: 2.9.10
+    labels:
+      run_diff: "true"
+      helm3: "true"
+
+  - name: cloudflare-tunnel
+    chart: cloudflare/cloudflare-tunnel
+    namespace: cloudflare-util
+    version: 0.3.0
+    installed: {{ env "INSTALL_CLOUDFLARE_TUNNEL" | default "false" }}
+    labels:
+      run_diff: "true"
+      helm3: "true"
+    values:
+      - values/cloudflare.default.yaml
+      - values/cloudflare.custom.yaml
+    set:
+      - name: cloudflare.secret
+        value: {{ env "CLOUDFLARE_TUNNEL_SECRET" }}
