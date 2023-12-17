@@ -168,7 +168,7 @@ deploy_kube_prometheus_stack() {
     # Install the kube-prometheus-stack chart with desired configurations
     helm upgrade --install "$release_name" prometheus-community/"$chart_name" \
         --namespace "$namespace" \
-        --kubeconfig $KUBECONFIG \
+        --kubeconfig "$KUBECONFIG" \
         --set prometheus.enabled="true" \
         --set prometheus.serviceAccount.name="kube-prometheus" \
         --set prometheus.ingress.annotations."kubernetes\.io/ingress\.class"="nginx" \
