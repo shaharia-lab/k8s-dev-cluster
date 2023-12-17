@@ -48,3 +48,11 @@ jobs:
             fi
             sleep 1
           done
+
+      - name: Check localhost response
+        run: |
+          response=$(curl --write-out "%{http_code}" --silent --output /dev/null http://localhost)
+          if [ "$response" -ne 404 ]; then
+            echo "Error: expected a 404 response, got $response"
+            exit 1
+          fi
