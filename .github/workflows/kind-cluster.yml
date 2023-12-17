@@ -37,4 +37,14 @@ jobs:
 
       - name: apply helmfile
         run: |
-          helmfile --file ./helm sync
+          command_retry=0
+          until [ $command_retry -ge 2 ]
+          do
+            helmfile --file ./helm sync && break
+            command_retry=$[$command_retry+1]
+            if [ $command_retry -eq 2 ]; then
+                echo "Command failed after 2 attempts"
+                exit 1
+            fi
+            sleep 1
+          done
