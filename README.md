@@ -9,7 +9,7 @@ Deploy a local kubernetes cluster for development purpose. This repository conta
 
 - [Docker](https://docs.docker.com/get-docker/)
 - [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
-- [Helmfile](https://github.com/roboll/helmfile)
+- [Helmfile](https://github.com/helmfile/helmfile)
 
 ## Usage
 

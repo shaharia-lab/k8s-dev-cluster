@@ -26,3 +26,14 @@ jobs:
         run: |
           kubectl cluster-info
           kubectl get nodes
+
+      - name: install helmfile
+        run: |
+          curl -LO https://github.com/helmfile/helmfile/releases/download/v0.159.0/helmfile_0.159.0_darwin_amd64.tar.gz
+          tar -xzvf helmfile_0.159.0_darwin_amd64.tar.gz
+          sudo mv helmfile /usr/local/bin
+          helmfile --version
+
+      - name: apply helmfile
+        run: |
+          helmfile --file ./helm sync
