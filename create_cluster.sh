@@ -145,4 +145,4 @@ prepare_kind_cluster() {
 }
 
 # Call the function to prepare the Kind cluster
-prepare_kind_cluster $CLUSTER_NAME $NODES
+prepare_kind_cluster "$CLUSTER_NAME" "$NODES"
