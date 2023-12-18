@@ -1,25 +1,36 @@
 #!/bin/bash
 
-# Set the desired configuration
+# Define the version of Kind to be used, the name of the cluster to be created, and the number of nodes in the cluster
 KIND_VERSION="v0.20.0"
 CLUSTER_NAME="local-k8s"
-NODES=2
+NODES=3
 
-# Function to delete an existing Kind cluster
+# Function to delete the Kind cluster if it is already running
 delete_cluster() {
     local cluster_name=$1
+
+    # Check if the cluster is already running
     if kind get clusters | grep -q "^$cluster_name$"; then
         echo "Kind cluster '$cluster_name' is already running. Deleting the cluster..."
+
+        # Delete the running cluster
         kind delete cluster --name "$cluster_name"
     fi
 }
 
-# Function to install Kind if not already installed
+# Function to install Kind if it is not already installed
 install_kind() {
+    # Check if Kind is installed
     if ! command -v kind &> /dev/null; then
         echo "Kind not found. Installing Kind..."
+
+        # Download Kind from the official repository
         curl -Lo ./kind "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64"
+
+        # Make the downloaded file executable
         chmod +x ./kind
+
+        # Move the executable file to the local bin directory
         sudo mv ./kind /usr/local/bin/kind
     fi
 }
@@ -29,6 +40,8 @@ create_cluster() {
     local cluster_name=$1
     local nodes=$2
     echo "Creating Kind cluster: $cluster_name with $nodes nodes..."
+
+    # Create the cluster with the specified configuration
     cat <<EOF | kind create cluster --name "$cluster_name" --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -75,114 +88,35 @@ nodes:
 EOF
 }
 
-# Function to verify cluster status
+# Function to verify the status of the cluster
 verify_cluster_status() {
     echo "Verifying cluster status..."
+
+    # Print the cluster information
     kubectl cluster-info
 }
 
-# Function to wait until all nodes are ready
+# Function to wait until all nodes in the cluster are ready
 wait_for_nodes_ready() {
     echo "Waiting for all nodes to be ready..."
+
+    # Wait until all nodes are ready
     kubectl wait --for=condition=ready nodes --all --timeout=300s
 }
 
-# Function to install and configure Ingress controller
-install_ingress_controller() {
-    echo "Installing ingress controller"
-    kubectl create ns ingress-nginx
-    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml -n ingress-nginx
+# Function to print the IP address of the control panel of the Kind cluster
+print_kind_cluster_control_panel_ip() {
+  local cluster_name=$1
+
+  # Get the name of the control plane node
+  node_name=$(kubectl get nodes --selector=node-role.kubernetes.io/control-plane= -o jsonpath='{.items[0].metadata.name}')
+
+  # Get the internal IP address of the control plane node
+  internal_ip=$(kubectl get nodes "${node_name}" -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
+
+  # Print the internal IP address
+  echo "IP Address for KiND cluster control plane: ${cluster_name}: ${internal_ip}"
 }
-
-# Function to wait until Ingress controller is ready
-wait_for_ingress_ready() {
-    echo "Waiting for ingress controller to be ready..."
-    kubectl wait --namespace ingress-nginx \
-      --for=condition=ready pod \
-      --selector=app.kubernetes.io/component=controller \
-      --timeout=90s
-}
-
-# Function to deploy test app
-deploy_test_app() {
-    echo "Deploying test app..."
-    kubectl create deployment test-app --image=nginx
-    kubectl expose deployment test-app --type=NodePort --port=80 --target-port=80
-    echo "Test app deployed and exposed."
-}
-
-# Function to print URL for accessing the test app
-print_test_app_url() {
-    local cluster_ip
-    cluster_ip=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[0].address}')
-    local node_port
-    node_port=$(kubectl get service test-app -o jsonpath='{.spec.ports[0].nodePort}')
-    echo "You can access the test app at: http://$cluster_ip:$node_port"
-}
-
-# Function to install PostgreSQL in Kind cluster using Helm chart
-install_postgresql() {
-    local chart_name="postgresql"
-    local chart_repo="https://charts.bitnami.com/bitnami"
-    local namespace="$1"
-    local release_name="postgresql"
-    local admin_username="app"
-    local admin_password="pass"
-    local admin_database="app"
-
-    echo "Installing PostgreSQL using Helm chart..."
-
-    # Add the Bitnami Helm repository
-    helm repo add bitnami "$chart_repo"
-
-    # Create the PostgreSQL namespace
-    kubectl create namespace "$namespace"
-
-    # Install PostgreSQL using the Helm chart and override admin credentials
-    helm upgrade --install "$release_name" bitnami/"$chart_name" \
-        --namespace "$namespace" \
-        --set auth.username="$admin_username" \
-        --set auth.password="$admin_password" \
-        --set auth.database="$admin_database"
-
-    echo "PostgreSQL installation completed."
-}
-
-# Function to deploy kube-prometheus-stack Helm chart to Kind cluster
-# Function to deploy kube-prometheus-stack Helm chart to Kind cluster
-deploy_kube_prometheus_stack() {
-    local cluster_name=$1
-    local chart_name="kube-prometheus-stack"
-    local chart_repo="https://prometheus-community.github.io/helm-charts"
-    local namespace="$2"
-    local release_name="kube-prometheus"
-
-    echo "Deploying kube-prometheus-stack Helm chart..."
-
-    # Add the Prometheus Community Helm repository
-    helm repo add prometheus-community "$chart_repo"
-
-    # Create the namespace if it doesn't exist
-    kubectl create namespace "$namespace" --dry-run=client -o yaml | kubectl apply -f -
-
-    # Install the kube-prometheus-stack chart with desired configurations
-    helm upgrade --install "$release_name" prometheus-community/"$chart_name" \
-        --namespace "$namespace" \
-        --kubeconfig "$KUBECONFIG" \
-        --set prometheus.enabled="true" \
-        --set prometheus.serviceAccount.name="kube-prometheus" \
-        --set prometheus.ingress.annotations."kubernetes\.io/ingress\.class"="nginx" \
-        --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues="false" \
-        --set prometheus.prometheusSpec.serviceMonitorSelector.matchExpressions[0].key="prometheus" \
-        --set prometheus.prometheusSpec.serviceMonitorSelector.matchExpressions[0].operator="In" \
-        --set prometheus.prometheusSpec.serviceMonitorSelector.matchExpressions[0].values[0]="kube-prometheus" \
-        --set prometheus.prometheusSpec.podMonitorSelectorNilUsesHelmValues="false" \
-        --set prometheus.prometheusSpec.ruleSelectorNilUsesHelmValues="false"
-
-    echo "kube-prometheus-stack deployment completed."
-}
-
-
 
 # Main script
 
@@ -191,20 +125,24 @@ prepare_kind_cluster() {
     local cluster_name=$1
     local nodes=$2
 
-    # Delete existing Kind cluster if running
+    # Delete the existing Kind cluster if it is running
     delete_cluster "$cluster_name"
 
-    # Install Kind if not already installed
+    # Install Kind if it is not already installed
     install_kind
 
     # Create the Kind cluster
     create_cluster "$cluster_name" "$nodes"
 
-    # Verify cluster status
+    # Verify the status of the cluster
     verify_cluster_status
 
-    # Wait until all nodes are ready
+    # Wait until all nodes in the cluster are ready
     wait_for_nodes_ready
+
+    # Print the IP address of the control panel of the Kind cluster
+    print_kind_cluster_control_panel_ip "$cluster_name"
 }
 
+# Call the function to prepare the Kind cluster
 prepare_kind_cluster $CLUSTER_NAME $NODES
