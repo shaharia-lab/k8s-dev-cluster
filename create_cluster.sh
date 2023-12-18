@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Define the version of Kind to be used, the name of the cluster to be created, and the number of nodes in the cluster
-KIND_VERSION="v0.20.0"
-CLUSTER_NAME="local-k8s"
-NODES=3
+KIND_VERSION="${KIND_VERSION:-v0.20.0}"
+CLUSTER_NAME="${CLUSTER_NAME:-local-k8s}"
+NODES="${NODES:-3}"
 
 # Function to delete the Kind cluster if it is already running
 delete_cluster() {
